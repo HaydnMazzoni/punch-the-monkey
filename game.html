@@ -171,12 +171,19 @@ function shouldDispensePrize(){
 }
 
 function dispensePrize(){
+        
+    points++;
     
-    switch (points) {
-    case 0: text.text = "Password: _ _ _ _ _ _"; break;
+    var code = "CantCanTheCodeRight";
+    var len = code.length;   
+    
+    for (var i = 0; i < len - points; i++) {
+       var randex = (i * 17) % len; //Randomize the index with-in the range.
+       code = code.substr(0, randex) + '_' + code.substr(randex+1);  
     }
     
-    points++;
+    text.text = "Password: " + code; 
+    
 }
 
 function catchPrize(){
