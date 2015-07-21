@@ -1,0 +1,174 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title></title>
+	<link rel="stylesheet" href="css/stylesheet.css" type="text/css" charset="utf-8" />
+	<script src="src/lib/phaser.min.js"></script>
+</head>
+<body>
+	<div id="game"></div>
+	<div id="orientation"></div>
+
+<script type="text/javascript">
+(function () {
+	
+    var passphrase = "x";
+    
+	var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
+
+    function preload() {
+        
+       game.load.spritesheet('monkey', 'assets/monkeyTiles.png', 256, 240);
+       
+       game.load.image('junk1', 'assets/greenBook.png');
+       game.load.image('junk2', 'assets/wine1.png');
+       game.load.image('junk3', 'assets/beer1.png');
+       game.load.image('junk4', 'assets/celery.png');
+       
+       game.load.image('punch', 'assets/punch.png');
+       
+       game.load.spritesheet('sparkles', 'assets/sparklesTiles.png', 193, 184);
+
+    }
+
+var tween;
+var sprite;
+var punchSprite;
+var emitter;
+var emitterTween;
+var points = 0;
+var text;
+
+
+function create() {
+
+
+
+    var style = { font: "65px Arial", fill: "#ff0044", align: "center" };
+    text = game.add.text(game.world.centerX, 300, "punch the monkey to win!", style);
+    text.anchor.set(0.5);
+
+
+
+    punchSprite = game.add.sprite(1000, 1000, 'punch');
+    punchSprite.scale.setTo(.5,.5);
+    punchSprite.anchor.setTo(0.5, 0.5);
+
+
+    sprite = game.add.sprite(237, 300, 'monkey');
+    sprite.anchor.setTo(.5, 1); //so it flips around its middle
+
+
+    sprite.animations.add('walk');
+
+    //  And this starts the animation playing by using its key ("walk")
+    //  30 is the frame rate (30fps)
+    //  true means it will loop when it finishes
+    sprite.animations.play('walk', 20, true);
+    
+  
+
+
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+    game.physics.enable([sprite, punchSprite], Phaser.Physics.ARCADE);
+
+ 
+
+    sprite.inputEnabled = true;
+    sprite.input.priorityID = 1;
+    sprite.events.onInputDown.add(particleBurst);
+    
+    sprite.body.collideWorldBounds = true;
+    sprite.body.bounce.setTo(.75,.75);
+    //sprite.body.drag.x = 50;
+    //sprite.body.drag.y = 50;
+  
+      //Start walkin'
+     sprite.body.velocity.x = 50;
+   
+
+    
+    emitter = game.add.emitter(237, 50, 100);
+    emitter.makeParticles(['junk1', 'junk2', 'junk3', 'junk4']);
+    emitter.gravity = 400;
+ 
+ 
+    
+    
+     //  Tell it we don't want physics to manage the rotation
+    punchSprite.body.allowRotation = false;
+ 
+ 
+ 
+ 
+ 
+}
+var emitter2;
+function particleBurst(pointer) {
+
+  // emitter2 = game.add.sprite(pointer.x, pointer.y, 'sparkles');
+ //  emitter2.animations.add('sparkle');
+ //  emitter2.animations.play('sparkle', 20, true);
+  // game.add.tween(emitter2).to( { y: 2000  }, 10000, Phaser.Easing.Linear.None, true, 0, 0, false);
+  // game.physics.enable(emitter2, Phaser.Physics.ARCADE);
+   
+  // emitter2.events.onOutOfBounds.add( function(obj) obj.destroy(), this );
+}
+
+function update() {
+
+    punchSprite.rotation = game.physics.arcade.moveToPointer(punchSprite, 500, game.input.activePointer,200);
+    game.physics.arcade.collide(sprite, punchSprite, collisionHandler, null, this);
+     game.physics.arcade.collide(emitter2, punchSprite, function() { text.text = "Password: _ _ F _ _ _ _ _ _ _ _ _ _ _ _ _"; } , null, this);
+    
+    //Move the particle emmitter with the monkey
+    emitter.x = sprite.x;
+    emitter.y = sprite.y;
+        
+    //turn the monkey left or right depending on the direction he's walking.
+    if (sprite.body.velocity.x > 0) { sprite.scale.x = -1; } else {sprite.scale.x = 1;}
+    
+    
+}
+
+function collisionHandler (obj1, obj2) {
+
+    game.stage.backgroundColor = '#992d2d';
+    
+    game.time.events.add(200, function() { game.stage.backgroundColor = 'black' ; }, this);
+    
+    //Shit out a bunch of crazy crap that this monkey might be holding
+    emitter.flow(2000,50,2,10)
+
+    game.time.events.add(50, function() { if (shouldDispensePrize()) { particleBurst(sprite) }; }, this);
+    
+
+    
+    points++;
+    
+    text.text = "Password: _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _"
+
+}
+
+    function render () {
+    
+    	//game.debug.inputInfo(32, 32);
+        game.debug.text(sprite.body.speed, 32,32)
+    
+    }
+
+function shouldDispensePrize(){
+    //Only shit out a prize when the monkey is hit with enough force.
+    return (sprite.body.speed > 1000);    
+}
+
+function catchPrize(){
+   
+}
+    
+}
+)();
+</script>
+
+</body>
+</html>
