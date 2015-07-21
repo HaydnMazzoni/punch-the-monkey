@@ -32,21 +32,26 @@
     }
 
 var tween;
-var sprite;
+var monkey;
 var punchSprite;
 var emitter;
 var emitterTween;
 var points = 0;
 var text;
 
+var gameHasStarted = false;
+var collisionProcessCallback = function() {return true;};
 
 function create() {
 
 
 
-    var style = { font: "65px Arial", fill: "#ff0044", align: "center" };
-    text = game.add.text(game.world.centerX, 300, "punch the monkey to win!", style);
-    text.anchor.set(0.5);
+    var styleH1 = { font: "65px Arial", fill: "#ff0044", align: "center" };
+    var styleH2 = { font: "30px Arial", fill: "#ff0044", align: "center" };
+    text = game.add.text(game.world.centerX, game.world.centerY, "Punch the Monkey to win!", styleH1);
+   var text2 = game.add.text(game.world.centerX, game.world.centerY+65, "(Tap/Click to start)", styleH2);
+   text.anchor.set(0.5);
+   text2.anchor.set(0.5);
 
 
 
@@ -55,52 +60,50 @@ function create() {
     punchSprite.anchor.setTo(0.5, 0.5);
 
 
-    sprite = game.add.sprite(237, 300, 'monkey');
-    sprite.anchor.setTo(.5, 1); //so it flips around its middle
+    monkey = game.add.sprite(237, 300, 'monkey');
+    monkey.anchor.setTo(.5, 1); //so it flips around its middle
 
 
-    sprite.animations.add('walk');
+    monkey.animations.add('walk');
 
     //  And this starts the animation playing by using its key ("walk")
     //  30 is the frame rate (30fps)
     //  true means it will loop when it finishes
-    sprite.animations.play('walk', 20, true);
+    monkey.animations.play('walk', 20, true);
     
   
 
 
     game.physics.startSystem(Phaser.Physics.ARCADE);
-    game.physics.enable([sprite, punchSprite], Phaser.Physics.ARCADE);
+    game.physics.enable([monkey, punchSprite], Phaser.Physics.ARCADE);
 
  
 
-    sprite.inputEnabled = true;
-    sprite.input.priorityID = 1;
-    sprite.events.onInputDown.add(particleBurst);
+    monkey.inputEnabled = true;
+    monkey.input.priorityID = 1;
     
-    sprite.body.collideWorldBounds = true;
-    sprite.body.bounce.setTo(.75,.75);
-    //sprite.body.drag.x = 50;
-    //sprite.body.drag.y = 50;
+    monkey.body.collideWorldBounds = true;
+    //When the monkey hits the walls, bounce with 75% energy.
+    monkey.body.bounce.setTo(.75,.75);
+    //Start walkin'
+    monkey.body.velocity.x = 50;
+    monkey.body.velocity.y = 10;
   
-      //Start walkin'
-     sprite.body.velocity.x = 50;
-   
+ 
 
-    
     emitter = game.add.emitter(237, 50, 100);
     emitter.makeParticles(['junk1', 'junk2', 'junk3', 'junk4']);
     emitter.gravity = 400;
  
- 
-    
-    
      //  Tell it we don't want physics to manage the rotation
     punchSprite.body.allowRotation = false;
  
- 
- 
- 
+    //Pause the glove until the user clicks/taps once.
+    this.game.input.onDown.add(function() {
+                                            gameHasStarted = true; 
+                                            text2.destroy()
+                                          });
+    
  
 }
 var emitter2;
@@ -117,49 +120,63 @@ function particleBurst(pointer) {
 
 function update() {
 
-    punchSprite.rotation = game.physics.arcade.moveToPointer(punchSprite, 500, game.input.activePointer,200);
-    game.physics.arcade.collide(sprite, punchSprite, collisionHandler, null, this);
-     game.physics.arcade.collide(emitter2, punchSprite, function() { text.text = "Password: _ _ F _ _ _ _ _ _ _ _ _ _ _ _ _"; } , null, this);
+    if (gameHasStarted) {punchSprite.rotation = game.physics.arcade.moveToPointer(punchSprite, 500, game.input.activePointer,200) };
+    
+    game.physics.arcade.collide(monkey, punchSprite, collisionHandler, collisionProcessCallback, this);
     
     //Move the particle emmitter with the monkey
-    emitter.x = sprite.x;
-    emitter.y = sprite.y;
+    emitter.x = monkey.x;
+    emitter.y = monkey.y;
         
     //turn the monkey left or right depending on the direction he's walking.
-    if (sprite.body.velocity.x > 0) { sprite.scale.x = -1; } else {sprite.scale.x = 1;}
+    if (monkey.body.velocity.x > 0) { monkey.scale.x = -1; } else {monkey.scale.x = 1;}
     
     
 }
 
 function collisionHandler (obj1, obj2) {
 
+    //On collision flash the background red, and set a timer to change it back.
     game.stage.backgroundColor = '#992d2d';
-    
-    game.time.events.add(200, function() { game.stage.backgroundColor = 'black' ; }, this);
-    
-    //Shit out a bunch of crazy crap that this monkey might be holding
+    game.time.events.add(150, function() { game.stage.backgroundColor = 'black' ; }, this);
+
+    //Shit out a bunch of crazy crap that this monkey might be holding in its butt.
     emitter.flow(2000,50,2,10)
 
-    game.time.events.add(50, function() { if (shouldDispensePrize()) { particleBurst(sprite) }; }, this);
+    game.time.events.add(50, function() { if (shouldDispensePrize()) { dispensePrize() }; }, this);
     
-
+    //After a collision, disable collisions to stop double/triple/quad punches.
+    collisionProcessCallback = function() { return false;}
+    punchSprite.alpha = 0.5; //Make the glove a little transparent so users know they can't punch yet.
     
-    points++;
+    //Make things punchable again after a short timeout.
+    game.time.events.add(500, function() { 
+                                            collisionProcessCallback = function() { return true;}
+                                            punchSprite.alpha = 1; 
+                                          }, this);
     
-    text.text = "Password: _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _"
 
 }
 
     function render () {
     
     	//game.debug.inputInfo(32, 32);
-        game.debug.text(sprite.body.speed, 32,32)
+        //game.debug.text(monkey.body.speed, 32,32)
     
     }
 
 function shouldDispensePrize(){
     //Only shit out a prize when the monkey is hit with enough force.
-    return (sprite.body.speed > 1000);    
+    return (monkey.body.speed > 1000);    
+}
+
+function dispensePrize(){
+    
+    switch (points) {
+    case 0: text.text = "Password: _ _ _ _ _ _"; break;
+    }
+    
+    points++;
 }
 
 function catchPrize(){
