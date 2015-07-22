@@ -31,29 +31,27 @@
 
     }
 
-var tween;
-var monkey;
-var punchSprite;
-var emitter;
-var emitterTween;
-var points = 0;
-var text;
+    var tween;
+    var monkey;
+    var punchSprite;
+    var emitter;
+    var emitterTween;
+    var points = 0;
+    var text, text2;
 
-var gameHasStarted = false;
-var collisionProcessCallback = function() {return true;};
+    //Text Styles
+    var styleH1 = { font: "65px Arial", fill: "#ff0044", align: "center" };
+    var styleH2 = { font: "30px Arial", fill: "#ff0044", align: "center" };
+
+    var gameHasStarted = false;
+    var collisionProcessCallback = function() {return true;};
 
 function create() {
 
-
-
-    var styleH1 = { font: "65px Arial", fill: "#ff0044", align: "center" };
-    var styleH2 = { font: "30px Arial", fill: "#ff0044", align: "center" };
-    text = game.add.text(game.world.centerX, game.world.centerY, "Punch the Monkey to win!", styleH1);
-   var text2 = game.add.text(game.world.centerX, game.world.centerY+65, "(Tap/Click to start)", styleH2);
+   text = game.add.text(game.world.centerX, game.world.centerY, "Punch the Monkey to win!", styleH1);
+   text2 = game.add.text(game.world.centerX, game.world.centerY+65, "(Tap/Click/Drag to start)", styleH2);
    text.anchor.set(0.5);
    text2.anchor.set(0.5);
-
-
 
     punchSprite = game.add.sprite(1000, 1000, 'punch');
     punchSprite.scale.setTo(.5,.5);
@@ -101,21 +99,8 @@ function create() {
     //Pause the glove until the user clicks/taps once.
     this.game.input.onDown.add(function() {
                                             gameHasStarted = true; 
-                                            text2.destroy()
+                                            text2.text = "";
                                           });
-    
- 
-}
-var emitter2;
-function particleBurst(pointer) {
-
-  // emitter2 = game.add.sprite(pointer.x, pointer.y, 'sparkles');
- //  emitter2.animations.add('sparkle');
- //  emitter2.animations.play('sparkle', 20, true);
-  // game.add.tween(emitter2).to( { y: 2000  }, 10000, Phaser.Easing.Linear.None, true, 0, 0, false);
-  // game.physics.enable(emitter2, Phaser.Physics.ARCADE);
-   
-  // emitter2.events.onOutOfBounds.add( function(obj) obj.destroy(), this );
 }
 
 function update() {
@@ -182,13 +167,13 @@ function dispensePrize(){
        code = code.substr(0, randex) + '_' + code.substr(randex+1);  
     }
     
-    text.text = "Password: " + code; 
+    text.style = styleH2;
+    text.text = "Password: " + code.split('').join(' '); 
+    
+    if (points >= len) { text2.text = "There are two microSD cards hidden inside the pickles!\nFind the cards and use this password to unlock the secrets with-in."}
     
 }
 
-function catchPrize(){
-   
-}
     
 }
 )();
