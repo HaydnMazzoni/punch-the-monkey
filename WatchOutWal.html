@@ -97,6 +97,7 @@ function create() {
                                             gameHasStarted = true; 
                                             text2.text = "";
                                             game.add.tween(text).to( { alpha: 0 }, 2000, "Linear", true);
+                                            punchSprite.scale.setTo(.8,.8);
                                           });
                                                                                   
 
@@ -109,7 +110,7 @@ function update() {
     game.physics.arcade.moveToPointer(punchSprite, 500, game.input.activePointer,200);
     
     //turn the monkey left or right depending on the direction he's walking.
-    if (punchSprite.body.velocity.x > 0) { punchSprite.scale.x = -1; } else {punchSprite.scale.x = 1;}
+    if (punchSprite.body.velocity.x > 0) { punchSprite.scale.x = -.8; } else {punchSprite.scale.x = .8;}
     
     //collision detection
     game.physics.arcade.overlap(missiles, punchSprite, collisionHandler, null, this);
