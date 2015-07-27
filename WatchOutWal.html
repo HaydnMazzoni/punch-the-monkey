@@ -22,6 +22,7 @@
        game.load.image('junk2', 'assets/junk2.gif');
        game.load.image('junk3', 'assets/junk3.gif');
 
+       game.load.image('happyBirthday', 'assets/happyBirthday.png');
        
        game.load.image('punch', 'assets/punch.png');
        
@@ -115,6 +116,12 @@ function update() {
     fireMissile();
      
     scoreText.text = "Score: " + points + "/60"; 
+    
+    if (points >= 60) {
+            gameHasStarted = false;
+            var happyBirthday = game.add.sprite(game.world.centerX, game.world.centerY, 'happyBirthday');
+            happyBirthday.anchor.set(0.5);
+        }
     
 }
 
