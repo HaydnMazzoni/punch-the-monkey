@@ -1,0 +1,207 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title></title>
+	<link rel="stylesheet" href="css/stylesheet.css" type="text/css" charset="utf-8" />
+	<script src="src/lib/phaser.min.js"></script>
+</head>
+<body>
+	<div id="game"></div>
+	<div id="orientation"></div>
+
+<script type="text/javascript">
+(function () {
+	    
+	var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
+
+    function preload() {
+        
+       game.load.spritesheet('explosion', 'assets/explosion.gif', 157, 229);
+       
+       game.load.image('junk1', 'assets/junk1.gif');
+       game.load.image('junk2', 'assets/junk2.gif');
+       game.load.image('junk3', 'assets/junk3.gif');
+
+       
+       game.load.image('punch', 'assets/punch.png');
+       
+       
+       game.load.image('missile', 'assets/missile.png');
+       game.load.image('fighter', 'assets/fighter.png');
+       game.load.spritesheet('rocketWal', 'assets/rocketWal.png', 304, 190);
+       
+       game.load.spritesheet('sparkles', 'assets/sparklesTiles.png', 193, 184);
+
+    }
+
+    var punchSprite;
+    var emitter;
+    var emitterTween;
+    var points = 0;
+    var text, text2, scoreText;
+
+    //Text Styles
+    var styleH1 = { font: "65px Arial", fill: "#ff0044", align: "center" };
+    var styleH2 = { font: "30px Arial", fill: "#ff0044", align: "center" };
+
+    var missiles;
+    var bulletTime = 0;
+    var gameHasStarted = false;
+    var collisionProcessCallback = function() {return true;};
+
+function create() {
+
+    //  Our missile group
+    missiles = game.add.group();
+    missiles.enableBody = true;
+    missiles.physicsBodyType = Phaser.Physics.ARCADE;
+    missiles.createMultiple(30, 'missile');
+    missiles.setAll('anchor.x', 0.5);
+    missiles.setAll('anchor.y', 1);
+    missiles.setAll('outOfBoundsKill', true);
+    missiles.setAll('checkWorldBounds', true);
+
+
+   scoreText = game.add.text(game.world.centerX, 30, "Score: 0/60", styleH2); 
+   text = game.add.text(game.world.centerX, game.world.centerY, "Watch out Wal!", styleH1);
+   text2 = game.add.text(game.world.centerX, game.world.centerY+65, "Drag Wal around to help him make it to 60.\n(Tap to start)", styleH2);
+   text.anchor.set(0.5);
+   text2.anchor.set(0.5);
+   scoreText.anchor.set(0.5);
+
+    punchSprite = game.add.sprite(1000, 1000, 'rocketWal');
+    punchSprite.animations.add('walk');
+    punchSprite.animations.play('walk', 100, true);
+    punchSprite.scale.x = -1;
+    punchSprite.anchor.setTo(0.5, 0.5);
+
+
+ 
+ 
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+    game.physics.enable([punchSprite], Phaser.Physics.ARCADE);
+
+
+    emitter = game.add.emitter(237, 50);
+    emitter.makeParticles(['junk1', 'junk2', 'junk3']);
+    emitter.gravity = 400;
+    emitter.maxParticleSpeed = {x: 800, y: 800};
+ 
+
+
+    //Pause the glove until the user clicks/taps once.
+    this.game.input.onDown.add(function() {
+                                            gameHasStarted = true; 
+                                            text2.text = "";
+                                            game.add.tween(text).to( { alpha: 0 }, 2000, "Linear", true);
+                                          });
+                                                                                  
+
+}
+
+function update() {
+
+    if (!gameHasStarted) { return; };
+    
+    game.physics.arcade.moveToPointer(punchSprite, 500, game.input.activePointer,200);
+    
+    //turn the monkey left or right depending on the direction he's walking.
+    if (punchSprite.body.velocity.x > 0) { punchSprite.scale.x = -1; } else {punchSprite.scale.x = 1;}
+    
+    //collision detection
+    game.physics.arcade.overlap(missiles, punchSprite, collisionHandler, null, this);
+    
+   // game.physics.arcade.collide(monkey, punchSprite, collisionHandler, collisionProcessCallback, this);
+    fireMissile();
+     
+    scoreText.text = "Score: " + points + "/60"; 
+    
+}
+
+function collisionHandler (obj1, obj2) {
+
+    points = points - 5;
+
+    //On collision flash the background red, and set a timer to change it back.
+    game.stage.backgroundColor = '#992d2d';
+    game.time.events.add(150, function() { game.stage.backgroundColor = 'black' ; }, this);
+
+    emitter.x = obj1.x;
+    emitter.y = obj1.y;
+
+    //Boom
+    emitter.forceQuantity = 20;
+    emitter.start(true, 2000, null, 20);
+    
+    //Explode
+    var exp = game.add.sprite(obj2.x, obj2.y - (obj2.height/2), 'explosion');
+    exp.anchor.setTo(0.5, 0.5);
+    exp.scale.setTo(1.5,1.5);
+    exp.animations.add('walk');
+    exp.animations.play('walk', 50, false);
+    obj2.kill();
+    game.time.events.add(300, function() { exp.kill(); }, this);
+    
+    
+
+    game.time.events.add(50, function() { if (shouldDispensePrize()) { dispensePrize() }; }, this);
+    
+    //After a collision, disable collisions to stop double/triple/quad punches.
+    collisionProcessCallback = function() { return false;}
+    punchSprite.alpha = 0.5; //Make the glove a little transparent so users know they can't punch yet.
+    
+    //Make things punchable again after a short timeout.
+    game.time.events.add(500, function() { 
+                                            collisionProcessCallback = function() { return true;}
+                                            punchSprite.alpha = 1; 
+                                          }, this);
+    
+
+}
+
+function render () {
+
+	//game.debug.inputInfo(32, 32);
+    //game.debug.text(monkey.body.speed, 32,32)
+
+}
+
+function shouldDispensePrize(){
+    //Only shit out a prize when the monkey is hit with enough force.
+    //return (monkey.body.speed > 1000);   
+     return true;
+}
+
+function dispensePrize(){
+
+}
+
+
+function fireMissile () {
+
+    //  To avoid them being allowed to fire too fast we set a time limit
+    if (gameHasStarted && game.time.now > bulletTime)
+    {
+        //  Grab the first bullet we can from the pool
+        missile = missiles.getFirstExists(false);
+        
+        if (missile)
+        {
+            //  And fire it
+            missile.reset(game.world.randomX, game.world.height);
+            missile.body.velocity.y = -700;
+            bulletTime = game.time.now + 500;
+            points++;
+        }
+    }
+
+}
+
+    
+}
+)();
+
+</script>
+
+</body>
+</html>
