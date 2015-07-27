@@ -59,18 +59,20 @@ function create() {
     missiles.createMultiple(30, 'missile');
     missiles.setAll('anchor.x', 0.5);
     missiles.setAll('anchor.y', 1);
+    missiles.setAll('scale.x',.70);
+    missiles.setAll('scale.y',.70);
     missiles.setAll('outOfBoundsKill', true);
     missiles.setAll('checkWorldBounds', true);
 
 
    scoreText = game.add.text(game.world.centerX, 30, "Score: 0/60", styleH2); 
    text = game.add.text(game.world.centerX, game.world.centerY, "Watch out Wal!", styleH1);
-   text2 = game.add.text(game.world.centerX, game.world.centerY+65, "Drag Wal around to help him make it to 60.\n(Tap to start)", styleH2);
+   text2 = game.add.text(game.world.centerX, game.world.centerY+95, "Drag Wal around to avoid the missiles and\nhelp him make it to 60.\n(Tap to start)", styleH2);
    text.anchor.set(0.5);
    text2.anchor.set(0.5);
    scoreText.anchor.set(0.5);
 
-    punchSprite = game.add.sprite(1000, 1000, 'rocketWal');
+    punchSprite = game.add.sprite(game.world.centerX, game.world.centerY-120, 'rocketWal');
     punchSprite.animations.add('walk');
     punchSprite.animations.play('walk', 100, true);
     punchSprite.scale.x = -1;
@@ -127,7 +129,7 @@ function update() {
 
 function collisionHandler (obj1, obj2) {
 
-    points = points - 5;
+    points = points - 3;
 
     //On collision flash the background red, and set a timer to change it back.
     game.stage.backgroundColor = '#992d2d';
@@ -197,7 +199,7 @@ function fireMissile () {
             //  And fire it
             missile.reset(game.world.randomX, game.world.height);
             missile.body.velocity.y = -700;
-            bulletTime = game.time.now + 500;
+            bulletTime = game.time.now + 800;
             points++;
         }
     }
